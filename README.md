@@ -7,8 +7,6 @@ authority was **revoked after the token was issued** — with no detection — a
 demonstration of how a PFC mediator closes that gap by failing closed and
 emitting an independently verifiable receipt chain.
 
-Sibling project to `pfc-landscape-monitor`; same workspace conventions.
-
 ```
 pfc-mcp-authority-gap/
 ├── pfc/             # minimal PFC delegation-chain library (shared)
@@ -20,10 +18,12 @@ pfc-mcp-authority-gap/
 └── THREAT_MODEL.md
 ```
 
-The chain and receipt semantics are **not reinvented here** — they are deferred
-to the `pfc-delegation-chain` and `pfc-mediated-agent` skills. `pfc/` is a small,
-faithful subset of the v0.13 four-artifact chain: enough to make the gap and its
-closure runnable end to end.
+The chain and receipt semantics follow PFC's internal specification artifacts
+(`pfc-delegation-chain` and `pfc-mediated-agent`), but **this repository is fully
+self-contained and runnable without them**: `pfc/` is a faithful standalone
+subset of the v0.13 four-artifact chain, and an outside reader needs nothing
+external to read, run, or audit any of it. Those artifacts are cited only to show
+where the canonical semantics live, not as a dependency.
 
 ---
 
@@ -32,8 +32,9 @@ closure runnable end to end.
 OAuth 2.1 access tokens are **bearer** tokens: possession is sufficient, and a
 resource server validates them **statelessly** — signature, audience, expiry,
 and the `scope` claim — with no token-introspection round-trip on the request
-path. That is exactly what the stateless MCP profile prescribes, and `vulnerable/`
-implements it faithfully (it is not a strawman).
+path. The stateless MCP profile **permits** this local-validation pattern, and it
+is the common deployment — not a mandate. `vulnerable/` implements that honest,
+permitted baseline faithfully (it is not a strawman).
 
 The consequence is a **time-of-authorization vs. time-of-use** gap:
 
@@ -98,7 +99,7 @@ standard, so unenforced in practice**. Each is proven by a test
 ## How PFC closes it
 
 In `governed/`, the same agent never holds a credential or a signing key (it is
-**not** a principal in the chain — `pfc-mediated-agent`). It only emits an
+**not** a principal in the chain). It only emits an
 untrusted `ActionRequest`. A **mediator** (the enforcement point) maps that
 request onto the delegation chain and, on **every effectful request**:
 
@@ -186,9 +187,12 @@ unsigned ledger range, is the residual (see `THREAT_MODEL.md`).
 
 Requires Python 3.10+.
 
+On systems without a bare `python`/`pip` alias (most Linux and macOS), use
+`python3` and `pip3` for every command below.
+
 ```bash
 cd pfc-mcp-authority-gap
-pip install -r requirements.txt          # cryptography, pytest
+pip install -r requirements.txt          # or: pip3 install -r requirements.txt  (cryptography, pytest)
 
 # 1. The gap: revoked authority still acts, no detection.
 python -m vulnerable.demo
@@ -215,8 +219,18 @@ all tests pass.
 See `THREAT_MODEL.md` for the trust boundaries, attacker model, and exactly which
 invariant stops each move.
 
+## Contributing / found a flaw?
+
+Adversarial review is the point. If you find a hole in the threat model, a way
+past the auditor, or a bug in the chain logic, please open an issue — concrete
+attacks on `governed/` and its `auditor.py` are especially welcome.
+
 ## Sources
 
-- [NSA Releases Guidance on Zero Trust Maturity Throughout the Application and Workload Pillar](https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/3784301/nsa-releases-guidance-on-zero-trust-maturity-throughout-the-application-and-wor/)
-- [New NSA Guidance on Zero Trust Principles — continuous, automated enforcement](https://www.forescout.com/blog/new-nsa-guidance-on-zero-trust-principles-push-enforcement/)
-- Chain/receipt semantics: `pfc-delegation-chain` and `pfc-mediated-agent` skills (v0.13 / v0.1).
+- [MCP 2026-07-28 release candidate — maintainer announcement](https://blog.modelcontextprotocol.io/posts/2026-07-28-release-candidate/)
+- [MCP authorization specification (current stable, 2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization)
+- [NSA — *MCP: Security Design Considerations for AI-Driven Automation* (CSI PDF)](https://www.nsa.gov/Portals/75/documents/Cybersecurity/CSI_MCP_SECURITY.pdf)
+- [NSA — *Advancing Zero Trust Maturity Throughout the Application and Workload Pillar*](https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/3784301/nsa-releases-guidance-on-zero-trust-maturity-throughout-the-application-and-wor/)
+- Chain/receipt semantics follow PFC's internal specification artifacts
+  `pfc-delegation-chain` (v0.13) and `pfc-mediated-agent` (v0.1); this repo
+  reproduces a faithful, self-contained subset and requires neither to run.

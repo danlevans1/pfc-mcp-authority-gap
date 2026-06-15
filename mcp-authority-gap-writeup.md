@@ -168,7 +168,7 @@ Three scoped questions:
    revocation transport, and freshness policy to implementations?
 
 Reference implementation (runnable, three paths, standalone auditor, full test
-suite): **[repository link — placeholder]**.
+suite): **https://github.com/danlevans1/pfc-mcp-authority-gap**.
 
 ## Appendix A: Hardening against timestamp manipulation
 
